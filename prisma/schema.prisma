@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "sqlserver"
+}
+
+model Especialidades {
+  IdEspecialidad     Int       @id(map: "PK__Especial__693FA0AFC7A5D573") @default(autoincrement())
+  NombreEspecialidad String    @db.VarChar(100)
+  Medicos            Medicos[]
+}
+
+model HistoriaClinica {
+  IdEvolucion        Int       @id(map: "PK__Historia__FE66485D1A7CEF9F") @default(autoincrement())
+  IdTurno            Int       @unique(map: "UQ__Historia__C1ECF79B567D2CFB")
+  IdPaciente         Int
+  IdMedico           Int
+  FechaAtencion      DateTime? @default(now(), map: "DF__HistoriaC__Fecha__6C190EBB") @db.DateTime
+  MotivoRealConsulta String?   @db.NVarChar(Max)
+  Sintomas           String?   @db.NVarChar(Max)
+  Diagnostico        String?   @db.NVarChar(Max)
+  Tratamiento        String?   @db.NVarChar(Max)
+  Medicos            Medicos   @relation(fields: [IdMedico], references: [IdMedico], onUpdate: NoAction, map: "FK__HistoriaC__IdMed__6B24EA82")
+  Pacientes          Pacientes @relation(fields: [IdPaciente], references: [IdPaciente], onUpdate: NoAction, map: "FK__HistoriaC__IdPac__6A30C649")
+  Turnos             Turnos    @relation(fields: [IdTurno], references: [IdTurno], onUpdate: NoAction, map: "FK__HistoriaC__IdTur__693CA210")
+  Recetas            Recetas[]
+}
+
+model HorariosAtencion {
+  IdHorario            Int      @id(map: "PK__Horarios__1539229BCB9EA51C") @default(autoincrement())
+  IdMedico             Int
+  DiaSemana            Int      @db.TinyInt
+  HoraInicio           DateTime @db.Time
+  HoraFin              DateTime @db.Time
+  DuracionTurnoMinutos Int?     @default(20, map: "DF__HorariosA__Durac__5FB337D6")
+  Medicos              Medicos  @relation(fields: [IdMedico], references: [IdMedico], onUpdate: NoAction, map: "FK__HorariosA__IdMed__5DCAEF64")
+}
+
+model Medicos {
+  IdMedico         Int                @id(map: "PK__Medicos__C326E652C202872C") @default(autoincrement())
+  IdUsuario        String             @unique(map: "UQ__Medicos__5B65BF964A07504D") @db.UniqueIdentifier
+  Nombre           String             @db.VarChar(100)
+  Apellido         String             @db.VarChar(100)
+  Matricula        String             @unique(map: "UQ__Medicos__0FB9FB4FD17659C7") @db.VarChar(50)
+  IdEspecialidad   Int
+  HistoriaClinica  HistoriaClinica[]
+  HorariosAtencion HorariosAtencion[]
+  Especialidades   Especialidades     @relation(fields: [IdEspecialidad], references: [IdEspecialidad], onUpdate: NoAction, map: "FK__Medicos__IdEspec__5AEE82B9")
+  Usuarios         Usuarios           @relation(fields: [IdUsuario], references: [IdUsuario], onUpdate: NoAction, map: "FK__Medicos__IdUsuar__59FA5E80")
+  Turnos           Turnos[]
+}
+
+model Pacientes {
+  IdPaciente      Int               @id(map: "PK__Paciente__C93DB49B60C60807") @default(autoincrement())
+  IdUsuario       String?           @db.UniqueIdentifier
+  Nombre          String            @db.VarChar(100)
+  Apellido        String            @db.VarChar(100)
+  DNI             String            @unique(map: "UQ__Paciente__C035B8DDB0561B06") @db.VarChar(20)
+  FechaNacimiento DateTime?         @db.Date
+  ObraSocial      String?           @db.VarChar(100)
+  NroAfiliado     String?           @db.VarChar(50)
+  HistoriaClinica HistoriaClinica[]
+  Usuarios        Usuarios?         @relation(fields: [IdUsuario], references: [IdUsuario], onDelete: NoAction, onUpdate: NoAction, map: "FK__Pacientes__IdUsu__5535A963")
+  Turnos          Turnos[]
+}
+
+model Recetas {
+  IdReceta        Int             @id(map: "PK__Recetas__2CEFF157918CF36D") @default(autoincrement())
+  IdEvolucion     Int
+  Medicamento     String          @db.VarChar(255)
+  Indicaciones    String          @db.NVarChar(Max)
+  FechaEmision    DateTime?       @default(now(), map: "DF__Recetas__FechaEm__6FE99F9F") @db.Date
+  HistoriaClinica HistoriaClinica @relation(fields: [IdEvolucion], references: [IdEvolucion], onUpdate: NoAction, map: "FK__Recetas__IdEvolu__6EF57B66")
+}
+
+model Roles {
+  IdRol     Int        @id(map: "PK__Roles__2A49584C689D7945") @default(autoincrement())
+  NombreRol String     @db.VarChar(50)
+  Usuarios  Usuarios[]
+}
+
+model Turnos {
+  IdTurno         Int              @id(map: "PK__Turnos__C1ECF79A3D21D9B7") @default(autoincrement())
+  IdPaciente      Int
+  IdMedico        Int
+  FechaHora       DateTime         @db.DateTime
+  Estado          String?          @default("Reservado", map: "DF__Turnos__Estado__6477ECF3") @db.VarChar(20)
+  MotivoConsulta  String?          @db.VarChar(255)
+  HistoriaClinica HistoriaClinica?
+  Medicos         Medicos          @relation(fields: [IdMedico], references: [IdMedico], onUpdate: NoAction, map: "FK__Turnos__IdMedico__6383C8BA")
+  Pacientes       Pacientes        @relation(fields: [IdPaciente], references: [IdPaciente], onUpdate: NoAction, map: "FK__Turnos__IdPacien__628FA481")
+}
+
+model Usuarios {
+  IdUsuario    String      @id(map: "PK__Usuarios__5B65BF9734995BB6") @default(dbgenerated("newid()"), map: "DF__Usuarios__IdUsua__4F7CD00D") @db.UniqueIdentifier
+  Email        String      @unique(map: "UQ__Usuarios__A9D10534A9A56515") @db.VarChar(100)
+  PasswordHash String      @db.VarChar(255)
+  IdRol        Int
+  Activo       Boolean?    @default(true, map: "DF__Usuarios__Activo__5165187F")
+  Medicos      Medicos?
+  Pacientes    Pacientes[]
+  Roles        Roles       @relation(fields: [IdRol], references: [IdRol], onUpdate: NoAction, map: "FK__Usuarios__IdRol__5070F446")
+}

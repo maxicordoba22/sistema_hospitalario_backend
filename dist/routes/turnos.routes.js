@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const turnos_controller_1 = require("../controllers/turnos.controller");
+const router = (0, express_1.Router)();
+router.get('/', turnos_controller_1.getTurnos);
+router.post('/', turnos_controller_1.createTurno);
+router.put('/:id', turnos_controller_1.updateTurno);
+router.delete('/:id', turnos_controller_1.deleteTurno);
+exports.default = router;
